@@ -164,10 +164,9 @@
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
-import com.facebook.FacebookSdk;
 import com.facebook.appevents.AppEventsLogger;
-import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
+import com.facebook.login.widget.LoginButton;
 import com.nifcloud.mbaas.core.NCMB;
 import com.nifcloud.mbaas.core.NCMBException;
 import com.nifcloud.mbaas.core.NCMBFacebookParameters;
@@ -179,46 +178,43 @@ import com.nifcloud.mbaas.core.NCMBUser;
         //**************** APIキーの設定とSDKの初期化 **********************
         NCMB.initialize(this.getApplicationContext(), "YOUR_APPLICATION_KEY", "YOUR_CLIENT_KEY");
 
-        // Facebook settings
-        FacebookSdk.sdkInitialize(getApplicationContext());
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        AppEventsLogger.activateApp(this);
+        AppEventsLogger.activateApp(this.getApplication());
 
         callbackManager = CallbackManager.Factory.create();
-        LoginManager.getInstance().registerCallback(callbackManager,
-                new FacebookCallback<LoginResult>() {
-                    @Override
-                    public void onSuccess(LoginResult loginResult) {
+        LoginButton mLoginButton = findViewById(R.id.login_button);
+        mLoginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+            @Override
+            public void onSuccess(LoginResult loginResult) {
+                //Login to NIFCLOUD mobile backend
+                NCMBFacebookParameters parameters = new NCMBFacebookParameters(
+                        loginResult.getAccessToken().getUserId(),
+                        loginResult.getAccessToken().getToken(),
+                        loginResult.getAccessToken().getExpires()
+                );
+                try {
+                    NCMBUser.loginWith(parameters);
+                    Toast.makeText(getApplicationContext(), "Login to NIFCLOUD mbaas with Facebook account", Toast.LENGTH_LONG).show();
+                } catch (NCMBException e) {
+                    e.printStackTrace();
+                }
+            }
 
-                        //Login to NIFCLOUD mobile backend
-                        NCMBFacebookParameters parameters = new NCMBFacebookParameters(
-                                loginResult.getAccessToken().getUserId(),
-                                loginResult.getAccessToken().getToken(),
-                                loginResult.getAccessToken().getExpires()
-                        );
-                        try {
-                            NCMBUser.loginWith(parameters);
-                            Toast.makeText(getApplicationContext(), "Login to NIFCLOUD mbaas with Facebook account", Toast.LENGTH_LONG).show();
-                        } catch (NCMBException e) {
-                            e.printStackTrace();
-                        }
-                    }
+            @Override
+            public void onCancel() {
+                // App code
+                Log.d("tag", "onCancel");
+            }
 
-                    @Override
-                    public void onCancel() {
-                        // App code
-                        Log.d("tag", "onCancel");
-                    }
-
-                    @Override
-                    public void onError(FacebookException exception) {
-                        // App code
-                        Log.d("tag", "onError:" + exception);
-                    }
-                });
+            @Override
+            public void onError(@NonNull FacebookException e) {
+                // App code
+                Log.d("tag", "onError:" + e);
+            }
+        });
     }
 ```
 
