@@ -16,9 +16,9 @@
 
 ## 動作環境
 
-* MacOS Big Sur 11.6 
-* Android Studio Arctic Fox 2020.3.1
-* Pixle 3 - Android 12 (Simulator)
+* MacOS Monterey version 12.5
+* Android Studio Chipmunk | 2021.2.1 Patch 2
+* Pixel 2 - Android 13 (Simulator)
 
 ※上記内容で動作確認をしています。
 
@@ -84,7 +84,7 @@
 
 ![画像0005](/readme-img/fb_0005.png)
 
-* `アプリID`の設定します。
+* `アプリID`や`クライアントトークン`の設定します。
   * `/app/src/main/res/values/strings.xml`を編集します。
 
 ![画像8](/readme-img/Screen8.png)

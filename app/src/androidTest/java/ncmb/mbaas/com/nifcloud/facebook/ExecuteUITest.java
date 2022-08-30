@@ -1,6 +1,8 @@
 package ncmb.mbaas.com.nifcloud.facebook;
 
 
+import android.os.Build;
+import android.util.Log;
 import android.view.View;
 import android.webkit.WebView;
 import android.widget.Button;
@@ -17,6 +19,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject;
+import androidx.test.uiautomator.UiObjectNotFoundException;
 import androidx.test.uiautomator.UiSelector;
 import androidx.test.uiautomator.Until;
 
@@ -33,6 +36,7 @@ import static androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 import static org.junit.Assert.assertThat;
 
 @RunWith(AndroidJUnit4.class)
@@ -64,6 +68,7 @@ public class ExecuteUITest {
 
     @Test
     public void initialScreen() {
+        allowPermissionsIfNeeded();
         tvHead1.check(matches(withText("NIFCLOUD")));
         tvHead2.check(matches(withText("mobile backend")));
         btnLogin.check(matches(withText("Log in")));
@@ -76,12 +81,12 @@ public class ExecuteUITest {
      */
     @Test
     public void testFacebook_correctData_enterNotificationCenter() throws Exception {
-
+        allowPermissionsIfNeeded();
         final String FB_EMAIL = "YOUR_EMAIL@mail.com";
         final String FB_PASS = "YOUR_PASS_WORD";
 
         final UiDevice mDevice =
-                UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+                UiDevice.getInstance(getInstrumentation());
 
         final int timeOut = 1000 * 60;
 
@@ -95,37 +100,44 @@ public class ExecuteUITest {
         UiObject emailInput = mDevice.findObject(new UiSelector()
                 .instance(0)
                 .className(EditText.class));
-
-        emailInput.waitForExists(timeOut);
-        emailInput.setText(FB_EMAIL);
+        if (emailInput.exists()) {
+            emailInput.waitForExists(timeOut);
+            emailInput.setText(FB_EMAIL);
+        }
 
         // Set Password
         UiObject passwordInput = mDevice.findObject(new UiSelector()
                 .instance(1)
                 .className(EditText.class));
 
-        passwordInput.waitForExists(timeOut);
-        passwordInput.setText(FB_PASS);
+        if (passwordInput.exists()) {
+            passwordInput.waitForExists(timeOut);
+            passwordInput.setText(FB_PASS);
+        }
 
         // Confirm Button Click
+        boolean isNewWindow = false;
+        if (emailInput.exists() && passwordInput.exists()) {
+            isNewWindow = true;
+        }
         UiObject buttonLogin = mDevice.findObject(new UiSelector()
                 .instance(0)
                 .className(Button.class));
-
-        buttonLogin.waitForExists(timeOut);
-        buttonLogin.clickAndWaitForNewWindow();
+        if (buttonLogin.exists()) {
+            buttonLogin.waitForExists(timeOut);
+            buttonLogin.clickAndWaitForNewWindow();
+        }
 
         // Facebook WebView - Page 2
-        UiObject buttonOk = mDevice.findObject(new UiSelector()
-                .instance(0)
-                .className(Button.class));
+        if (isNewWindow) {
+            UiObject buttonOk = mDevice.findObject(new UiSelector()
+                    .instance(0)
+                    .className(Button.class));
 
-        buttonOk.waitForExists(timeOut);
-        buttonOk.click();
-
-        // should be properly synchronised with Espresso via IdlingResource,
-        // ConditionWatcher or any similar waiting solution
-        Thread.sleep(15000);
+            buttonOk.waitForExists(timeOut);
+            buttonOk.click();
+            Thread.sleep(15000);
+        }
 
         btnLogin.check(matches(withText("Log out")));
     }
@@ -155,6 +167,19 @@ public class ExecuteUITest {
             matcher.perform(va);
 
             return text[0];
+        }
+    }
+    protected static void allowPermissionsIfNeeded() {
+        if (Build.VERSION.SDK_INT >= 33) {
+            UiDevice device = UiDevice.getInstance(getInstrumentation());
+            UiObject allowPermissions = device.findObject(new UiSelector().text("Allow"));
+            if (allowPermissions.exists()) {
+                try {
+                    allowPermissions.click();
+                } catch (UiObjectNotFoundException e) {
+                    Log.d("ncmbFaceBook", "Error: " + e.getMessage());
+                }
+            }
         }
     }
 }
