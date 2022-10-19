@@ -113,7 +113,7 @@
 ```
 >keytool -exportcert -alias androiddebugkey -keystore %HOMEPATH%\.android\debug.keystore | openssl sha1 -binary | openssl base64
 >キーストアのパスワードを入力してください: android
->0QYXA5jGgnGg/wco7iNiEXYdeVw=
+>0QYX************iNiEXYdeVw=
 ```
 
 ![画像15](/readme-img/Screen15.png)
@@ -126,7 +126,7 @@
 ### 6. 動作確認
 
 * AndroidStudioからビルドする。
-    * 「プロジェクト場所」\app\build\outputs\apk\ ***.apk ファイルが生成される。
+    * 「プロジェクト場所」\app\build\outputs\apk\***.apk ファイルが生成される。
 * apk ファイルをインストールしてシミュレーターが起動したら、Login画面が表示されます。
 * __Login__ ボタンをクリックします。
 * Facebookログインの画面（ブラウザ）が表示されるので、必要事項を入力し、ログインを行います。
