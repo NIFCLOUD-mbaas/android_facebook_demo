@@ -16,9 +16,9 @@
 
 ## 動作環境
 
-* MacOS Big Sur 11.6 
-* Android Studio Arctic Fox 2020.3.1
-* Pixle 3 - Android 12 (Simulator)
+* MacOS Monterey version 12.5
+* Android Studio Chipmunk | 2021.2.1 Patch 2
+* Pixel 2 - Android 13 (Simulator)
 
 ※上記内容で動作確認をしています。
 
@@ -84,7 +84,7 @@
 
 ![画像0005](/readme-img/fb_0005.png)
 
-* `アプリID`の設定します。
+* `アプリID`や`クライアントトークン`の設定します。
   * `/app/src/main/res/values/strings.xml`を編集します。
 
 ![画像8](/readme-img/Screen8.png)
@@ -113,7 +113,7 @@
 ```
 >keytool -exportcert -alias androiddebugkey -keystore %HOMEPATH%\.android\debug.keystore | openssl sha1 -binary | openssl base64
 >キーストアのパスワードを入力してください: android
->0QYXA5jGgnGg/wco7iNiEXYdeVw=
+>0QYX************iNiEXYdeVw=
 ```
 
 ![画像15](/readme-img/Screen15.png)
@@ -126,7 +126,7 @@
 ### 6. 動作確認
 
 * AndroidStudioからビルドする。
-    * 「プロジェクト場所」\app\build\outputs\apk\ ***.apk ファイルが生成される。
+    * 「プロジェクト場所」\app\build\outputs\apk\***.apk ファイルが生成される。
 * apk ファイルをインストールしてシミュレーターが起動したら、Login画面が表示されます。
 * __Login__ ボタンをクリックします。
 * Facebookログインの画面（ブラウザ）が表示されるので、必要事項を入力し、ログインを行います。
@@ -164,10 +164,9 @@
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
-import com.facebook.FacebookSdk;
 import com.facebook.appevents.AppEventsLogger;
-import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
+import com.facebook.login.widget.LoginButton;
 import com.nifcloud.mbaas.core.NCMB;
 import com.nifcloud.mbaas.core.NCMBException;
 import com.nifcloud.mbaas.core.NCMBFacebookParameters;
@@ -179,46 +178,43 @@ import com.nifcloud.mbaas.core.NCMBUser;
         //**************** APIキーの設定とSDKの初期化 **********************
         NCMB.initialize(this.getApplicationContext(), "YOUR_APPLICATION_KEY", "YOUR_CLIENT_KEY");
 
-        // Facebook settings
-        FacebookSdk.sdkInitialize(getApplicationContext());
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        AppEventsLogger.activateApp(this);
+        AppEventsLogger.activateApp(this.getApplication());
 
         callbackManager = CallbackManager.Factory.create();
-        LoginManager.getInstance().registerCallback(callbackManager,
-                new FacebookCallback<LoginResult>() {
-                    @Override
-                    public void onSuccess(LoginResult loginResult) {
+        LoginButton mLoginButton = findViewById(R.id.login_button);
+        mLoginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+            @Override
+            public void onSuccess(LoginResult loginResult) {
+                //Login to NIFCLOUD mobile backend
+                NCMBFacebookParameters parameters = new NCMBFacebookParameters(
+                        loginResult.getAccessToken().getUserId(),
+                        loginResult.getAccessToken().getToken(),
+                        loginResult.getAccessToken().getExpires()
+                );
+                try {
+                    NCMBUser.loginWith(parameters);
+                    Toast.makeText(getApplicationContext(), "Login to NIFCLOUD mbaas with Facebook account", Toast.LENGTH_LONG).show();
+                } catch (NCMBException e) {
+                    e.printStackTrace();
+                }
+            }
 
-                        //Login to NIFCLOUD mobile backend
-                        NCMBFacebookParameters parameters = new NCMBFacebookParameters(
-                                loginResult.getAccessToken().getUserId(),
-                                loginResult.getAccessToken().getToken(),
-                                loginResult.getAccessToken().getExpires()
-                        );
-                        try {
-                            NCMBUser.loginWith(parameters);
-                            Toast.makeText(getApplicationContext(), "Login to NIFCLOUD mbaas with Facebook account", Toast.LENGTH_LONG).show();
-                        } catch (NCMBException e) {
-                            e.printStackTrace();
-                        }
-                    }
+            @Override
+            public void onCancel() {
+                // App code
+                Log.d("tag", "onCancel");
+            }
 
-                    @Override
-                    public void onCancel() {
-                        // App code
-                        Log.d("tag", "onCancel");
-                    }
-
-                    @Override
-                    public void onError(FacebookException exception) {
-                        // App code
-                        Log.d("tag", "onError:" + exception);
-                    }
-                });
+            @Override
+            public void onError(@NonNull FacebookException e) {
+                // App code
+                Log.d("tag", "onError:" + e);
+            }
+        });
     }
 ```
 
